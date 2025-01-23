@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   // 设置窗口标题
   await windowManager.setTitle('');
+  await windowManager.setMinimumSize(const Size(1300, 700));
+  // 获取屏幕尺寸
+  final screenSize = await screenRetriever.getPrimaryDisplay();
+  const windowSize = Size(1300, 700);
+  final x = (screenSize.size.width - windowSize.width) / 2;
+  final y = (screenSize.size.height - windowSize.height) / 2;
+  // 设置窗口位置
+  await windowManager.setPosition(Offset(x, y));
   runApp(const MyApp());
 }
 
