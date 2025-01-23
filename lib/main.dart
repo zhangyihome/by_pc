@@ -1,49 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_win_floating/webview_win_floating.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
+  // 设置窗口标题
+  await windowManager.setTitle('联想百应');
   runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final controller = WebViewController();
   final urlController = TextEditingController();
-  final url = "https://baiying.lenovo.com/download";
+  final url = "https://dawei.lenovo.com/chatPage";
 
   @override
   void initState() {
     super.initState();
+    // 添加观察者以监听系统主题变化
+    WidgetsBinding.instance.addObserver(this);
+
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     controller.setBackgroundColor(Colors.white);
     controller.setNavigationDelegate(NavigationDelegate(
       onNavigationRequest: (request) {
-        if (request.url == url) {
+        if (request.url != '') {
           return NavigationDecision.navigate;
         } else {
-          print("prevent user navigate out of google website!");
+          debugPrint("prevent user navigate out of google website!");
           return NavigationDecision.prevent;
         }
       },
       onPageStarted: (url) {
         urlController.text = url;
-        print("onPageStarted: $url");
+        debugPrint("onPageStarted: $url");
       },
       onPageFinished: (url) => print("onPageFinished: $url"),
       onWebResourceError: (error) =>
-          print("onWebResourceError: ${error.description}"),
+          debugPrint("onWebResourceError: ${error.description}"),
     ));
     controller.addJavaScriptChannel("Flutter", onMessageReceived: (message) {
-      print("js -> dart : ${message.message}");
+      debugPrint("js -> dart : ${message.message}");
     });
     controller.loadRequest(Uri.parse(url));
+  }
+
+  @override
+  void dispose() {
+    // 移除观察者
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    // 系统主题变化时更新背景颜色
+    Future.delayed(const Duration(milliseconds: 200), () {
+      setState(() {
+        debugPrint("Flutter 系统主题：${MediaQuery.of(context).platformBrightness}");
+        controller.setBackgroundColor(
+            MediaQuery.of(context).platformBrightness == Brightness.dark
+                ? Colors.black
+                : Colors.white);
+      });
+    });
   }
 
   void testJavascript() {
@@ -66,29 +94,34 @@ class _MyAppState extends State<MyApp> {
       MyCircleButton(icon: Icons.javascript, onTap: testJavascript),
       MyCircleButton(icon: Icons.arrow_back, onTap: controller.goBack),
       MyCircleButton(icon: Icons.arrow_forward, onTap: controller.goForward),
-      /*
-      MyCircleButton(
-          icon: Icons.arrow_back,
-          onTap: () {
-            controller.runJavaScript("history.back();");
-          }),
-      MyCircleButton(
-          icon: Icons.arrow_forward,
-          onTap: () {
-            controller.runJavaScript("history.forward();");
-          }),
-          */
       MyCircleButton(icon: Icons.refresh, onTap: controller.reload),
       Expanded(child: urlBox),
     ]);
 
-    Widget body =
-        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      buttonRow,
-      Expanded(child: WebViewWidget(controller: controller)),
-    ]);
+    Widget body = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // buttonRow,
+        Expanded(child: WebViewWidget(controller: controller)),
+      ],
+    );
 
-    return MaterialApp(home: Scaffold(body: body));
+    return MaterialApp(
+      title: '联想百应',
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primarySwatch: Colors.blue,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+      ),
+      themeMode: ThemeMode.system,
+      // 使用系统主题
+      home: Scaffold(
+        body: body,
+      ),
+    );
   }
 }
 
