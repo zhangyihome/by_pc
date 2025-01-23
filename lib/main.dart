@@ -6,7 +6,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   // 设置窗口标题
-  await windowManager.setTitle('联想百应');
+  await windowManager.setTitle('');
   runApp(const MyApp());
 }
 
