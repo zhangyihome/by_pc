@@ -107,7 +107,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
 
     return MaterialApp(
-      title: '联想百应',
       theme: ThemeData(
         brightness: Brightness.light,
         primarySwatch: Colors.blue,
